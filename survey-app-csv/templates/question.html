@@ -19,21 +19,25 @@
 </head>
 <body>
     <form action="" method="post">
-	<p>{{ question.prompt }}{% if question.mandatory %}<strong>*</strong>{% endif %}</p>
+        <p>{{ question.prompt }}{% if question.mandatory %}<strong>*</strong>{% endif %}</p>
         {% if question.type == 'text' %}
-		<input type="text" name="response" value="{% if current_answer is not none %}{{ current_answer }}{% endif %}">
+                <input type="text" name="response" value="{% if current_answer is not none %}{{ current_answer }}{% endif %}">
         {% elif question.type == 'choice' %}
             {% for option in question.options %}
-		<input type="radio" name="response" value="{{ option }}" {% if option == current_answer %}checked{% endif %}>
+                <input type="radio" name="response" value="{{ option }}" {% if option == current_answer %}checked{% endif %}>
                 <label for="{{ option }}">{{ option }}</label><br>
             {% endfor %}
         {% elif question.type == 'range' %}
-	<input type="range" id="slider" name="response" min="1" max="10" value={% if current_answer is not none %}{{ current_answer }}{% endif %} oninput="updateSliderValue(this.value)">
-            <p>Your selection: <span id="sliderValue">{% if current_answer is not none %}{{ current_answer }}{% endif %}</span></p>  <!-- Default value -->
+            <label for="option{{question.range_min}}">{{question.range_min_label}}</label><br>
+            {% for i in range(question.range_min, question.range_max+1) %}
+                    <input type="radio" id="option{{i}}" name="response" value="{{i}}" {% if i == current_answer %}checked{% endif %}>
+                    <label for="option{{i}}">{{i}}</label><br>
+            {% endfor %}
+            <label for="option{{question.range_max}}">{{question.range_max_label}}</label><br>
         {% endif %}
-	<input type="submit" name="action" value="Back">
-	<input type="submit" name="action" value="Next">
-	{% if error %}
+        <input type="submit" name="action" value="Back">
+        <input type="submit" name="action" value="Next">
+        {% if error %}
             <p class="error">{{ error }}</p>
         {% endif %}
     </form>
