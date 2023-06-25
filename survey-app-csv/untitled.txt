@@ -1,0 +1,25 @@
+
+
+###old file write code
+            
+            ## TODO: break file write logic out into its own function
+            ## update file
+            data = []
+            with open(csv_file, 'r') as f:
+                reader = csv.reader(f)
+                data = list(reader)
+
+            # Check if the response already exists and update it
+            for row in data:
+                if row[0] == session['sid'] and row[2] == str(q_index):
+                    row[4] = response
+                    break
+            else:
+                # If the response doesn't exist, append it
+                data.append([session['sid'], session['start_time'], q_index, question, response])
+        
+            # Write the data back to the file
+            with open(csv_file, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerows(data)
+

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Survey</title>
+    <style>
+        .error {
+            color: red;
+        }
+    </style>
+    <script>
+    if (performance.navigation.type == 1) {
+        // This is a page reload
+        fetch('/reset', {
+            method: 'POST'
+        });
+        location.replace("/");
+    }
+    </script>
+</head>
+<body>
+    <form action="" method="post">
+	<p>{{ question.prompt }}{% if question.mandatory %}<strong>*</strong>{% endif %}</p>
+        {% if question.type == 'text' %}
+		<input type="text" name="response" value="{% if current_answer is not none %}{{ current_answer }}{% endif %}">
+        {% elif question.type == 'choice' %}
+            {% for option in question.options %}
+		<input type="radio" name="response" value="{{ option }}" {% if option == current_answer %}checked{% endif %}>
+                <label for="{{ option }}">{{ option }}</label><br>
+            {% endfor %}
+        {% elif question.type == 'range' %}
+	<input type="range" id="slider" name="response" min="1" max="10" value="{% if current_answer is not none %}{{ current_answer }}{% endif %}" oninput="updateSliderValue(this.value)">
+            <p>Your selection: <span id="sliderValue">5</span></p>  <!-- Default value -->
+        {% endif %}
+	<input type="submit" name="action" value="Back">
+	<input type="submit" name="action" value="Next">
+	{% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+    </form>
+    <!-- show value of the Slider input -->
+    <script>
+        function updateSliderValue(val) {
+            document.getElementById('sliderValue').innerText = val;
+        }
+    </script>
+</body>
+</html>
+
