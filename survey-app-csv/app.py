@@ -7,6 +7,7 @@ CSV_COLUMN_NAMES = ['session_id', 'start_time', 'q_index', 'question', 'response
 DEFAULT_RANGE_SLIDER = 5
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your_secret_key_here'
 
 ## add a will not answer button to the range input
 
@@ -86,8 +87,7 @@ def question():
     q_index = session.get('q_index', 0)
     error=None
     current_answer = session['responses'].get(questions[q_index].prompt, '')
-    current_answer = DEFAULT_RANGE_SLIDER if current_answer == '' and 
-        questions[q_index].type == "range" else current_answer
+    current_answer = DEFAULT_RANGE_SLIDER if current_answer == '' and questions[q_index].type == "range" else current_answer
     
     if request.method == 'POST':
         answer = request.form.get('response', '').strip()
@@ -112,7 +112,6 @@ def question():
             write_response(response)
                
             # redirect to next question or previous question based on action
-            session['q_index'] += 1 if request.form.get('action') == 'Next' else -1
             
             # redirect to next question or previous question based on action
             action = request.form.get('action')
