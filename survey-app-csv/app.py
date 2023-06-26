@@ -8,8 +8,6 @@ CSV_COLUMN_NAMES = ['session_id', 'start_time', 'q_index', 'question', 'response
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 
-## add a will not answer button to the range input
-
 class Question:
     def __init__(self, q_type, prompt, options=None, mandatory=False, 
                      range_min=None, range_max=None, range_min_label=None, range_max_label=None):
@@ -92,6 +90,7 @@ def question():
     error=None
     current_answer = session['responses'].get(questions[q_index].prompt, '')
     
+    ## TODO: Refactor and clean page navigation
     if request.method == 'POST':
         answer = request.form.get('response', '').strip()
         #question = "Question {}".format(q_index + 1)
@@ -139,7 +138,8 @@ def question():
                     return redirect(url_for('question'))
 
     ## Fallback to 'GET' or missing input for a mandatory question
-    return render_template('question.html', question=questions[q_index], error=error, current_answer=current_answer)
+    return render_template('question.html', question=questions[q_index], 
+                           error=error, current_answer=current_answer)
 
 
 @app.route('/done')
