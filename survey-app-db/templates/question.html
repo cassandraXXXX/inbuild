@@ -42,8 +42,10 @@
                 {% endfor %}
         {% endif %}
         <input type="submit" class="hidden" name="action" value="Next">
-        <input type="submit" name="action" value="Back">
-        <input type="submit" name="action" value="Next">
+        {% if show_back_button %}
+    		<button type="submit" name="action" value="Back">Back</button>
+	{% endif %}
+	<input type="submit" name="action" value="Next">
         {% if error %}
             <p class="error">{{ error }}</p>
         {% endif %}

@@ -135,7 +135,9 @@ def question():
                     session['q_index'] -= 1
                     return redirect(url_for('question'))
 
-    return render_template('question.html', question=questions[q_index], error=error, current_answer=current_answer)
+    return render_template('question.html', question=questions[q_index], 
+                           error=error, current_answer=current_answer, 
+                           show_back_button=(q_index > 0))
 
 @app.route('/done')
 def done():

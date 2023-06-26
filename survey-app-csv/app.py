@@ -139,7 +139,8 @@ def question():
 
     ## Fallback to 'GET' or missing input for a mandatory question
     return render_template('question.html', question=questions[q_index], 
-                           error=error, current_answer=current_answer)
+                           error=error, current_answer=current_answer, 
+                           show_back_button=(q_index > 0))
 
 
 @app.route('/done')
