@@ -1,6 +1,7 @@
 import csv, os, uuid
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from http import HTTPStatus
 
 CSV_FILE_NAME = 'survey_responses.csv'
 CSV_COLUMN_NAMES = ['session_id', 'start_time', 'q_index', 'question', 'response']
@@ -53,7 +54,7 @@ def start():
 def reset():
     # Reset the session and start new survey
     reset_session()
-    return '', 204  # Return 204, indicating that the request has succeeded but there's no representation to return (i.e. no body)
+    return '', HTTPStatus.NO_CONTENT # success, but empty response
 
 def write_response(response):
     try: 
@@ -93,18 +94,23 @@ def question():
     ## TODO: Refactor and clean page navigation
     if request.method == 'POST':
         answer = request.form.get('response', '').strip()
-        #question = "Question {}".format(q_index + 1)
         question = questions[q_index].prompt
         action = request.form.get('action')
         
-        # handle missing or bad inputs
-        if questions[q_index].mandatory and answer == '' and action != 'Back':
-            error = 'This is a required question. Please enter a response before you can move on.'
-        elif questions[q_index].mandatory and answer == '' and action == 'Back':
-            # don't save mandatory unanswered questions
-            if q_index > 0:
-                    session['q_index'] -= 1
-                    return redirect(url_for('question'))
+        # Handle Mandatory Questions
+        if questions[q_index].mandatory and answer == '':
+            if action != 'Back':
+                error = 'This is a required question. Please enter a response before you can move on.'
+                # clear past responses if any
+                session['responses'][questions[q_index].prompt] = None
+                current_answer = None
+            # note: we strictly don't need to check for q_index > 0 for Back button clicks
+            # because we disabled the Back button for the first input. But are doing so to
+            # decouple client-server checks
+            elif q_index > 0:
+                # don't save mandatory unanswered questions
+                session['q_index'] -= 1
+                return redirect(url_for('question'))
         else:
             # save response
             if questions[q_index].type == 'range':

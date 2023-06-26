@@ -1,6 +1,7 @@
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, g
 from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, g
+from http import HTTPStatus
 import uuid
 
 DATABASE = './responses.db'
@@ -85,7 +86,7 @@ def start():
 @app.route('/reset', methods=['POST'])
 def reset():
     reset_session()
-    return '', 204
+    return '', HTTPStatus.NO_CONTENT
 
 ## Note, writing all inputs, even empty ones to indicate this is a question the user has seen
 ## but is choosing not to answer
@@ -102,12 +103,20 @@ def question():
         question = questions[q_index].prompt
         action = request.form.get('action')
 
-        if questions[q_index].mandatory and answer == '' and action != 'Back':
-            error = 'This is a required question. Please enter a response before you can move on.'
-        elif questions[q_index].mandatory and answer == '' and action == 'Back':
-            if q_index > 0:
-                    session['q_index'] -= 1
-                    return redirect(url_for('question'))
+        # Handle Unanswered Mandatory Questions
+        if questions[q_index].mandatory and answer == '':
+            if action != 'Back':
+                error = 'This is a required question. Please enter a response before you can move on.'
+                # clear past responses if any
+                session['responses'][questions[q_index].prompt] = None
+                current_answer = None
+            # note: we strictly don't need to check for q_index > 0 for Back button clicks
+            # because we disabled the Back button for the first input. But are doing so to
+            # decouple client-server checks
+            elif q_index > 0:
+                # don't save mandatory unanswered questions
+                session['q_index'] -= 1
+                return redirect(url_for('question'))
         else:
             if questions[q_index].type == 'range':
                 session['responses'][questions[q_index].prompt] = int(answer) if answer else None
