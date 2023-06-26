@@ -82,72 +82,77 @@ def write_response(response):
     except csv.Error as e:
         return 'Error processing CSV file: {}'.format(e)
 
+def parse_and_set_answer(question, q_index, answer):
+    if question.type == 'range':
+        session['responses'][question.prompt] = int(answer) if answer else None
+    else:
+        session['responses'][question.prompt] = answer if answer else ''
+
+    response = {
+        'session_id': session['sid'],
+        'start_time': session['start_time'],
+        'q_index': q_index,
+        'question': question.prompt,
+        'response': session['responses'][question.prompt]
+    }
+    return response
+
+def navigate(action, q_index):
+    if action == 'Next':
+        if q_index < len(questions) - 1:
+            session['q_index'] += 1
+            return redirect(url_for('question'))
+        else:
+            return redirect(url_for('done'))
+    elif action == 'Back':
+        # note: we strictly don't need to check for q_index > 0 for Back button clicks
+        # because we disabled the Back button for the first input. But are doing so to
+        # decouple client-server checks
+        if q_index > 0:
+            session['q_index'] -= 1
+            return redirect(url_for('question'))
+    return None
+    
+## Note, writing all inputs, even empty ones to indicate this is a question the user has seen
+## but is choosing not to answer
 @app.route('/question', methods=['GET', 'POST'])
 def question():
-    # if session doesn't have an sid, start a new session
     if 'sid' not in session:
         return redirect(url_for('start'))
     q_index = session.get('q_index', 0)
     error=None
     current_answer = session['responses'].get(questions[q_index].prompt, '')
-    
-    ## TODO: Refactor and clean page navigation
+    question = questions[q_index]
+
     if request.method == 'POST':
         answer = request.form.get('response', '').strip()
-        question = questions[q_index].prompt
         action = request.form.get('action')
         
-        # Handle Mandatory Questions
-        if questions[q_index].mandatory and answer == '':
-            if action != 'Back':
+        if action == 'Next':
+            # Valid inputs, can move forward
+            if not question.mandatory or (question.mandatory and answer != ''):
+                response = parse_and_set_answer(question, q_index, answer)
+                write_response(response)
+                return navigate(action, q_index)
+            else: 
                 error = 'This is a required question. Please enter a response before you can move on.'
                 # clear past responses if any
-                session['responses'][questions[q_index].prompt] = None
-                current_answer = None
-            # note: we strictly don't need to check for q_index > 0 for Back button clicks
-            # because we disabled the Back button for the first input. But are doing so to
-            # decouple client-server checks
-            elif q_index > 0:
-                # don't save mandatory unanswered questions
-                session['q_index'] -= 1
-                return redirect(url_for('question'))
-        else:
-            # save response
-            if questions[q_index].type == 'range':
-                session['responses'][questions[q_index].prompt] = int(answer) if answer else None
-            else:
-                session['responses'][questions[q_index].prompt] = answer if answer else None
-
+                session['responses'][question.prompt] = None
+        elif action == 'Back':
+            response = parse_and_set_answer(question, q_index, answer)
+            # don't save mandatory unanswered questions. We are saving non-mandatory
+            # blanks to allow the db reader to see these questions were "viewed"
+            # by the user, but deliberately not answered.
+            if not question.mandatory or (question.mandatory and answer != ''):
+                write_response(response)
+            return navigate(action, q_index)
             
-            response = {
-                'session_id': session['sid'],
-                'start_time': session['start_time'],
-                'q_index': q_index,
-                'question': question,
-                # todo check for nulls in DB
-                'response': session['responses'][questions[q_index].prompt]
-            }
-        
-            write_response(response)
-               
-            # redirect to next question or previous question based on action
-           
-            if action == 'Next':
-                if q_index < len(questions) - 1:
-                    session['q_index'] += 1
-                    return redirect(url_for('question'))
-                else:
-                    return redirect(url_for('done'))
-            elif action == 'Back':
-                if q_index > 0:
-                    session['q_index'] -= 1
-                    return redirect(url_for('question'))
+        # Fall-through, update current answer in case it changed.
+        current_answer = session['responses'][question.prompt]
 
-    ## Fallback to 'GET' or missing input for a mandatory question
-    return render_template('question.html', question=questions[q_index], 
+    return render_template('question.html', question=question, 
                            error=error, current_answer=current_answer, 
                            show_back_button=(q_index > 0))
-
 
 @app.route('/done')
 def done():
