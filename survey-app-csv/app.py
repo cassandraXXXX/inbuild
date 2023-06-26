@@ -94,11 +94,18 @@ def question():
     
     if request.method == 'POST':
         answer = request.form.get('response', '').strip()
-        question = "Question {}".format(q_index + 1)
-
+        #question = "Question {}".format(q_index + 1)
+        question = questions[q_index].prompt
+        action = request.form.get('action')
+        
         # handle missing or bad inputs
-        if questions[q_index].mandatory and answer == '':
+        if questions[q_index].mandatory and answer == '' and action != 'Back':
             error = 'This is a required question. Please enter a response before you can move on.'
+        elif questions[q_index].mandatory and answer == '' and action == 'Back':
+            # don't save mandatory unanswered questions
+            if q_index > 0:
+                    session['q_index'] -= 1
+                    return redirect(url_for('question'))
         else:
             # save response
             if questions[q_index].type == 'range':
@@ -119,9 +126,7 @@ def question():
             write_response(response)
                
             # redirect to next question or previous question based on action
-            
-            # redirect to next question or previous question based on action
-            action = request.form.get('action')
+           
             if action == 'Next':
                 if q_index < len(questions) - 1:
                     session['q_index'] += 1
@@ -144,13 +149,19 @@ def done():
 @app.route('/results', methods=['GET'])
 def results():
     responses = []
-    with open(CSV_FILE_NAME, 'r') as f:
-        reader = csv.reader(f)
-        headers = next(reader)
-        for row in reader:
-            responses.append(dict(zip(headers, row)))
-    responses.sort(key=lambda r: (r['start_time'], r['session_id'], int(r['q_index'])))
-    return render_template('results.html', responses=responses)
+    if os.path.isfile(CSV_FILE_NAME):
+        with open(CSV_FILE_NAME, 'r') as f:
+            if os.stat(CSV_FILE_NAME).st_size == 0:
+                return "No responses available."
+            else:
+                reader = csv.reader(f)
+                headers = next(reader)
+                for row in reader:
+                    responses.append(dict(zip(headers, row)))
+        responses.sort(key=lambda r: (r['start_time'], r['session_id'], int(r['q_index'])))
+        return render_template('results.html', responses=responses)
+    else:
+        return "No responses available."
 
 if __name__ == '__main__':
     app.run(debug=True)
