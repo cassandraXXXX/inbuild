@@ -1,4 +1,5 @@
 import os
+import os
 import sys
 import csv
 import sqlite3
@@ -13,11 +14,11 @@ import uuid
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'auth_not_supported_dummy_secret_key'
 
-CSV_FILE_NAME = 'survey_responses.csv'
+CSV_FILE_NAME = '/tmp/survey_responses.csv'
 CSV_COLUMN_NAMES = ['session_id', 'start_time', 'q_index', 'question',
                     'response']
-DATABASE = './responses.db'
-
+DATABASE = '/tmp/responses.db'
+STORAGE_TYPE = os.getenv('STORAGE', 'csv') 
 
 class Question:
 
@@ -186,7 +187,7 @@ def results_db():
 @app.route('/', methods=['GET', 'POST'])
 def start():
     reset_session()
-    if args.storage == 'csv':
+    if STORAGE_TYPE == 'csv':
         return start_csv()
     else:
         return start_db()
@@ -194,7 +195,7 @@ def start():
 
 @app.route('/results', methods=['GET'])
 def results():
-    if args.storage == 'csv':
+    if STORAGE_TYPE == 'csv':
         return results_csv()
     else:
         return results_db()
@@ -285,7 +286,7 @@ def reset_session():
 
 
 def write_response(response):
-    if args.storage == 'csv':
+    if STORAGE_TYPE == 'csv':
         return write_response_csv(response)
     else:
         return write_response_db(response)
