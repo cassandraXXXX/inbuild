@@ -334,7 +334,9 @@ def navigate(action, q_index):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--storage', choices=['csv', 'db'],
-                        default='csv')
+    parser.add_argument('--storage', choices=['csv', 'db'])
     args = parser.parse_args()
+    if args.storage:
+        STORAGE_TYPE = args.storage
+    ## no else, storage type is already set from the env or to the default.
     app.run(debug=True)
