@@ -17,11 +17,34 @@ import uuid
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'auth_not_supported_dummy_secret_key'
 
+# Enabling support for both csvs and a SQLLite database. 
+# CSVs are a highly inefficient way of updating answer changes. But leaving the
+# initial csv implementation in here because they're readable and easier to debug.
 CSV_FILE_NAME = '/tmp/survey_responses.csv'
 CSV_COLUMN_NAMES = ['session_id', 'start_time', 'q_index', 'question',
                     'response']
 DATABASE = '/tmp/responses.db'
+
+# STORAGE_TYPE variable for GCP's app engine that does not support command-line args
+# this script currently supports command line args and env variables as inputs
+# command-line args will override env variables
 STORAGE_TYPE = os.getenv('STORAGE', 'csv') 
+
+def create_db():
+    conn = sqlite3.connect(DATABASE)
+    conn.execute('CREATE TABLE IF NOT EXISTS responses '
+                   '(session_id TEXT, start_time TEXT, q_index INTEGER, '
+                   'question TEXT, response TEXT, PRIMARY KEY (session_id, q_index))')
+    conn.close()
+
+def create_csv():
+    if not os.path.isfile(CSV_FILE_NAME):
+        with open(CSV_FILE_NAME, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=CSV_COLUMN_NAMES)
+            writer.writeheader()
+
+create_db()
+create_csv()
 
 class Question:
 
@@ -146,7 +169,9 @@ def start_db():
     # Initialize the database and table if they don't exist
 
     conn = get_db()
-    conn.execute('CREATE TABLE IF NOT EXISTS responses (session_id TEXT, start_time TEXT, q_index INTEGER, question TEXT, response TEXT, PRIMARY KEY (session_id, q_index))'
+    conn.execute('CREATE TABLE IF NOT EXISTS responses '
+                   '(session_id TEXT, start_time TEXT, q_index INTEGER, '
+                   'question TEXT, response TEXT, PRIMARY KEY (session_id, q_index))'
                  )
     conn.commit()
     return redirect(url_for('question', q_index=0))
@@ -173,6 +198,15 @@ def results_csv():
 def results_db():
     conn = get_db()
     cur = conn.cursor()
+    
+    # TODO: Can remove this check since we're initializing the table 
+    # at the start
+    # Check if the table exists
+    #cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='responses'")
+    
+    #if cur.fetchone() is None:
+    #    return 'No responses available.'
+    
     cur.execute('SELECT * FROM responses ORDER BY start_time, session_id, q_index'
                 )
     responses = [dict(zip([column[0] for column in cur.description],
