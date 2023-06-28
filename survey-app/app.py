@@ -1,5 +1,4 @@
 import os
-import os
 import sys
 import csv
 import sqlite3
@@ -10,6 +9,10 @@ from flask import Flask, render_template, request, redirect, url_for, \
 
 from http import HTTPStatus
 import uuid
+
+#############################################################
+## Initializations
+#############################################################
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'auth_not_supported_dummy_secret_key'
@@ -72,8 +75,9 @@ questions = [
     ]
 
 
-############################################################
+#############################################################
 ## Storage interface
+#############################################################
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -179,10 +183,11 @@ def results_db():
 
 
 ## Storage interface
-############################################################
+#############################################################
 
 #############################################################
 ## Flask App functions
+#############################################################
 
 @app.route('/', methods=['GET', 'POST'])
 def start():
@@ -210,9 +215,6 @@ def reset():
     return ('', HTTPStatus.NO_CONTENT)  # success, but empty response
 
 
-## Note, writing all inputs, even empty ones to indicate this is a question the user has seen
-## but is choosing not to answer
-
 @app.route('/question', methods=['GET', 'POST'])
 def question():
     if 'sid' not in session:
@@ -226,7 +228,10 @@ def question():
     if request.method == 'POST':
         answer = request.form.get('response', '').strip()
         action = request.form.get('action')
-
+        
+        ## Note, writing all inputs, even empty ones to indicate that
+        ## this is a question the user has seen but is choosing not to answer.
+        ## This does not apply to Mandatory questions which will never have empty answers.
         if action == 'Next':
 
             # Valid inputs, can move forward
@@ -260,6 +265,7 @@ def question():
 
         current_answer = session['responses'][question.prompt]
 
+    # Fall-through to GET or insisting user answers a question before moving forward.
     return render_template('question.html', question=question,
                            error=error, current_answer=current_answer,
                            show_back_button=q_index > 0)
@@ -270,12 +276,11 @@ def done():
     reset_session()
     return 'Thank you for your responses!'
 
-
-## Flask App
 #############################################################
 
-##########################################
+#############################################################
 ## Utils
+#############################################################
 
 def reset_session():
     session.clear()
@@ -330,7 +335,7 @@ def navigate(action, q_index):
 
 
 ## Utils
-##########################################
+#############################################################
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
