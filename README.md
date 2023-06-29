@@ -5,6 +5,18 @@ Build a survey app similar to Typeform, in python. Enable access to results of p
 - Nav: Hitting browser refresh will restart the user session and survey. Back and Next will help the user navigate through the survey
 - Results: Store in-progress and submitted responses
 
+# Versions
+There are two directories `survey-app` and `survey-app-gcp`. The first is for optimized for local runs. It uses the local
+file system to store data. And has the option to use csvs and SQLite for efficiency. 
+This version will also work with GCP, but will store data to a /tmp folder that's fairly ephemeral. This is because AppEngine
+doesn't support writes due to its distributed nature.
+
+The second, `survey-app-gcp`, works with GCP's persistent cloud storage buckets. In addition to the results end-point, you 
+can find data for this [here](https://ff60761d5b5c51af3339904f293779e161c38f868d1663bc9266b90-apidata.googleusercontent.com/download/storage/v1/b/inbuild-dee.appspot.com/o/survey_responses.csv?jk=AYvHSRFW9sADhchChugy0eXVXK_ffP5ygErIJ6mUwbTz7cOWu1kcfJW5fkl7w0auPStBG0aO-wv9RcyXjdzG27hC7YO9h5O05SvjwzeaICLn4BDJQrH05Xc1pmEG2Upu4KiAPr50Sf4pMURqStwzOx8T_b7ECN4NxhcFA-Iew5z2qNBBFifrQS6ST4yVOY4NA9BfPZn-EkfNpnzvTXMqdcDlelt2NB7rFoKb0aI5LX3ffuyvCYTM_0JRQVTcwfWeBuzV5tgPqlAhjbEfJ13GYkFKS37Zmudnp5daQdWRzQsWDrM-IB0DS30lYQ1d_WqO6XARNCaa7NDXKXEfYSkZwonpz4kc4yTZ66VWIntDi-faBWHCcJS1IXQHINjFWkTlKA03YSYh7x6mRkBkAssZ_Wvj2wUVdgpkVmGGX2gO9i5tsbvJKsxt-1G92RtEJNhD_hP84kRTBaIa1RvqGyAMu6xGbRMu8_VJ54IIyT9ybsvwKRFR6YUtv618IMHU0RtT3EwI0529bEQTdD-e6JU6B7_bAvMf5S9wxJ38spDrdsWUwwHUd_wC4H--x9vH57D27fHkxANRME4gsYrTXQ2L-P9WX1sFrd7Mu3tW-KKJeGDHWT_Gb4zY-J_pf4NvLw7I4ibXC5ZdYlBNfaRgBvTvlZNcL7qFlA8nDtfA8fEkt3zXElmEReZQE4TIjYQE77MAemHx9oD0J32cP1YiWYGg7wXOHcR7BwEoXJT-XIIvJp5cP-FLPtFlZduFJLnplgk44nBsoyhi7CWigGzYTL-Gm0q1hnRF-4zH5syON0K2NLdDbcHsUJWee4sJ5NxSmzri9gbuhej45cYZDNNtIql4ifdsuSkU_vLJIwveXWNGvoEys6d38JrulkA1_WdSIt0kzohJikomI1EhnDryLspRawyORBujLdJQ2RGQCuPaCnJ7qTlIRDU_0QwWmRX8-l95GmrdO32ZbLDKCTSwsM_9G9ZxIujgESv4A_nOVelHNBRRYZg0O2CVoKV8RB1dCEOD5MUpimUttxLTJdckbNr8xXvYfN46Y3gheaikYbXZNR8ST1CEIXbJUxZRICIusTVL8BQDxOXxXOoX56GG_JXAgDpjwhMsOlkfrilZxZZ4U2oj3-KnIn422pk7jzUziaNS9H8vdvCRMqRe0rM78iVnizhblIDB49LYSbZFkT6gQzRD25VtPw&isca=1) .
+
+Note, a csv on the bucket is not the most optimal pattern for large datasets, but works okay for this application. 
+The next step would be to use a relational database on GCP.
+
 # Access and Run
 
 ## Local running
